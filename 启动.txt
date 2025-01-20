@@ -1,1 +1,5 @@
-.\minio.exe server D:\Program Files\minio\dada --console-address "127.0.0.1:9000" --address "127.0.0.1:9005"
+cd  D:\minio\bin
+.\minio.exe server D:\minio\dada --console-address "127.0.0.1:9000" --address "127.0.0.1:9005"
+
+
+账号minioadmin密码minioadmin

@@ -7,10 +7,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AAvatar: typeof import('@arco-design/web-vue')['Avatar']
     AButton: typeof import('@arco-design/web-vue')['Button']
     ACard: typeof import('@arco-design/web-vue')['Card']
-    ALink: typeof import('@arco-design/web-vue')['Link']
     AList: typeof import('@arco-design/web-vue')['List']
     AListItem: typeof import('@arco-design/web-vue')['ListItem']
     AListItemMeta: typeof import('@arco-design/web-vue')['ListItemMeta']

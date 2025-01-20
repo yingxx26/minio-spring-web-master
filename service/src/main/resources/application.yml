@@ -18,9 +18,10 @@ mybatis-plus:
     map-underscore-to-camel-case: true
 
 minio:
-  endpoint: http://localhost:9000
+  endpoint: http://127.0.0.1:9005
   bucket: public-readonly-file
-  accesskey: minioadmin
-  secretkey: minioadmin
+  accesskey: xHcfBwboNydPdIRLZlQD
+  secretkey: WY5Ek7CQT810CvXWANxADrKI3GsRxxISAyerAvUR
   expiry: 1 # redis 文件信息失效时间 天
   breakpointTime: 1 # 分片地址失效时间 天
+
