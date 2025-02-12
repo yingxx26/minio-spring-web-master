@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import type { FileItem } from '@arco-design/web-vue'
+import type {FileItem} from '@arco-design/web-vue'
 import axios from 'axios'
 import pLimit from 'p-limit'
-import { CHUNK_SIZE } from '../constants'
+import {CHUNK_SIZE} from '../constants'
 // import createChunkFileAndMd5 from '../util/createChunkFileAndMd5'
-import { convertFileSizeUnit } from '../util/fileUtil'
-import { checkFileByMd5, initMultPartFile, mergeFileByMd5 } from '../services/apis'
-import { HttpCodeUploadEnum } from '../services'
-import type { UploadFileInfoType } from '../services/apis/typing'
+import {convertFileSizeUnit} from '../util/fileUtil'
+import {checkFileByMd5, initMultPartFile, mergeFileByMd5} from '../services/apis'
+import {HttpCodeUploadEnum} from '../services'
+import type {UploadFileInfoType} from '../services/apis/typing'
 import cutFile from '../core/cutFile'
-import { MerkleTree } from '../core/MerkleTree'
-import { reactive } from 'vue'
+import {MerkleTree} from '../core/MerkleTree'
+import {reactive} from 'vue'
 
 const limit = pLimit(3)
 
@@ -40,11 +40,11 @@ type FileTableDataType = {
 
 //  文件上传过程中的多种状态
 const tagMap = {
-  preparation: { color: 'gold', text: 'MD5计算中' },
-  preupload: { color: 'purple', text: '等待上传' },
-  uploading: { color: 'blue', text: '上传中' },
-  success: { color: 'green', text: '上传成功' },
-  error: { color: 'error', text: '上传失败' }
+  preparation: {color: 'gold', text: 'MD5计算中'},
+  preupload: {color: 'purple', text: '等待上传'},
+  uploading: {color: 'blue', text: '上传中'},
+  success: {color: 'green', text: '上传成功'},
+  error: {color: 'error', text: '上传失败'}
 }
 
 const visible = defineModel<boolean>('visible')
@@ -116,7 +116,8 @@ const onUpload = async () => {
  * @param item
  */
 const uploadFile = async (index: number, item: FileTableDataType) => {
-  const { code, data } = await checkFileByMd5(item.md5)
+
+  const {code, data} = await checkFileByMd5(item.md5)
   state.dataSource[index].status = 'uploading'
 
   if (code === HttpCodeUploadEnum.SUCCESS) {
@@ -141,7 +142,7 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
 
   // plimit 并发上传
   const uploadLimit = needUploadFile.map((n) =>
-    limit(() => uploadChunkUrl(n, index, totalSize, item.file.type))
+      limit(() => uploadChunkUrl(n, index, totalSize, item.file.type))
   )
 
   const results = await Promise.allSettled(uploadLimit)
@@ -154,7 +155,7 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
   }
 
   try {
-    const { code, data } = await mergeFileByMd5(item.md5)
+    const {code, data} = await mergeFileByMd5(item.md5)
     if (code === 200) {
       console.log(data)
       state.dataSource[index].status = 'success'
@@ -167,9 +168,10 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
 
 // 初始化分片操作并将分片文件和其上传地址一一对应
 const initSliceFile = async (item: FileTableDataType, initData: UploadFileInfoType) => {
-  //  只有上传中的分片文件才会有 initData 数据，用 {} 做兜底
-  const { uploadId, listParts } = initData || {}
 
+  //  只有上传中的分片文件才会有 initData 数据，用 {} 做兜底
+  const {uploadId, listParts} = initData || {}
+  // listParts 从 1 开始，前端需要上传的分片索引+1  private List<Integer> listParts;
   // 初始化分片参数
   const param: UploadFileInfoType = {
     uploadId,
@@ -182,16 +184,19 @@ const initSliceFile = async (item: FileTableDataType, initData: UploadFileInfoTy
   }
 
   const needUploadFile: ChunkFileUrlType[] = []
-
-  const { code, data } = await initMultPartFile(param)
+  //初始化文件分片地址及相关数据
+  const {code, data} = await initMultPartFile(param)
+  //data : private String uploadId;  private List<String> urls;
   if (code !== 200) return []
 
   // 存放需要去上传的文件数据
   if ((listParts || []).length == 0) {
-    // 若全都没有上传，一一对应，其中 urls 是所有分片上传的 url 集合
+ // 若全都没有上传，一一对应，其中 urls 是所有分片上传的 url 集合
     item.chunkFileList.forEach((item, index) => {
-      needUploadFile.push({ url: data.urls[index], file: item })
+      //url是minio初始化文件分片地址， /** 分片成功返回的分片地址，前端直接调用进行上传 */
+      needUploadFile.push({url: data.urls[index], file: item})
     })
+
     return needUploadFile
   }
 
@@ -200,43 +205,43 @@ const initSliceFile = async (item: FileTableDataType, initData: UploadFileInfoTy
     // listParts 索引是从 1 开始的
     const i = (listParts || []).findIndex((v) => index + 1 == v)
     if (i === -1) {
-      needUploadFile.push({ url: data.urls[index], file: item })
+      needUploadFile.push({url: data.urls[index], file: item})
     }
   })
 
   return needUploadFile
 }
 
-// 根据分片上传地址将分片直传至 minio
+// 根据分片上传地址将分片直传至 minio   函数名uploadChunkUrl，参数（），返回类型: Promise<void>
 const uploadChunkUrl = (
-  chunkItem: ChunkFileUrlType,
-  i: number,
-  totalSize: number,
-  type: string
+    chunkItem: ChunkFileUrlType,
+    i: number,
+    totalSize: number,
+    type: string
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
-    axios
-      .put(chunkItem.url, chunkItem.file, {
-        headers: { 'Content-Type': type || 'application/octet-stream' }
-      })
-      .then((res) => {
-        if (res.status !== 200) {
-          reject(chunkItem)
-        } else {
-          // 已上传的文件大小更新，上传进度更新
-          const newUploaedSize = state.dataSource[i].uploadedSize + chunkItem.file.size
-          state.dataSource[i] = {
-            ...state.dataSource[i],
-            uploadedSize: newUploaedSize,
-            progress: Math.floor((newUploaedSize / totalSize) * 100)
+
+    axios.put(chunkItem.url, chunkItem.file, {
+      headers: {'Content-Type': type || 'application/octet-stream'}
+    })
+        .then((res) => {
+          if (res.status !== 200) {
+            reject(chunkItem)
+          } else {
+            // 已上传的文件大小更新，上传进度更新
+            const newUploaedSize = state.dataSource[i].uploadedSize + chunkItem.file.size
+            state.dataSource[i] = {
+              ...state.dataSource[i],
+              uploadedSize: newUploaedSize,
+              progress: Math.floor((newUploaedSize / totalSize) * 100)
+            }
+            resolve()
           }
-          resolve()
-        }
-      })
-      .catch((err) => {
-        console.error(err)
-        reject(chunkItem)
-      })
+        })
+        .catch((err) => {
+          console.error(err)
+          reject(chunkItem)
+        })
   })
 }
 </script>
@@ -246,9 +251,11 @@ const uploadChunkUrl = (
     <a-card title="Arco Card" size="small">
       <template #title>
         <a-space>
-          <a-upload :show-file-list="false" :auto-upload="false" @change="selectFile" />
+          <a-upload :show-file-list="false" :auto-upload="false" @change="selectFile"/>
           <a-button type="primary" @click="onUpload">
-            <template #icon><icon-cloud /></template>
+            <template #icon>
+              <icon-cloud/>
+            </template>
             <template #default>上传文件</template>
           </a-button>
         </a-space>
@@ -272,7 +279,7 @@ const uploadChunkUrl = (
                   </span>
                 </div>
               </a-space>
-              <a-progress v-if="item.progress" :percent="item.progress / 100" />
+              <a-progress v-if="item.progress" :percent="item.progress / 100"/>
             </template>
           </a-list-item-meta>
           <template #actions>

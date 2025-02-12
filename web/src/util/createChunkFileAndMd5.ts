@@ -1,9 +1,9 @@
 import SparkMD5 from 'spark-md5'
-import { CHUNK_SIZE } from '@/constants'
+import {CHUNK_SIZE} from '@/constants'
 
 type ChunkData = {
-  md5: string
-  chunkFileList: Blob[]
+    md5: string
+    chunkFileList: Blob[]
 }
 
 /**
@@ -15,40 +15,40 @@ type ChunkData = {
  * @returns
  */
 const createChunkFileAndMd5 = (
-  file: File,
-  chunkCount: number,
-  onProgress?: (progress: number) => void,
+    file: File,
+    chunkCount: number,
+    onProgress?: (progress: number) => void,
 ): Promise<ChunkData> => {
-  const spark = new SparkMD5.ArrayBuffer()
-  let currentChunk = 0
-  const chunkFileList: Blob[] = []
+    const spark = new SparkMD5.ArrayBuffer()
+    let currentChunk = 0
+    const chunkFileList: Blob[] = []
 
-  const fileReader = new FileReader()
-  return new Promise((resolve) => {
-    fileReader.onload = function (e) {
-      if (!e.target?.result) return
-      spark.append(e.target.result as ArrayBuffer)
-      currentChunk++
-      // 将当前文件的md5进度计算回传
-      onProgress?.(Math.floor((currentChunk / chunkCount) * 100))
-      if (currentChunk < chunkCount) {
+    const fileReader = new FileReader()
+    return new Promise((resolve) => {
+        fileReader.onload = function (e) {
+            if (!e.target?.result) return
+            spark.append(e.target.result as ArrayBuffer)
+            currentChunk++
+            // 将当前文件的md5进度计算回传
+            onProgress?.(Math.floor((currentChunk / chunkCount) * 100))
+            if (currentChunk < chunkCount) {
+                loadNext()
+            } else {
+                const md5 = spark.end()
+                resolve({md5, chunkFileList})
+            }
+        }
+
+        function loadNext() {
+            const start = currentChunk * CHUNK_SIZE
+            const end = start + CHUNK_SIZE >= file.size ? file.size : start + CHUNK_SIZE
+            const chunkFile = file.slice(start, end)//yxx核心切片 核心分片
+            chunkFileList.push(chunkFile)
+            fileReader.readAsArrayBuffer(chunkFile)
+        }
+
         loadNext()
-      } else {
-        const md5 = spark.end()
-        resolve({ md5, chunkFileList })
-      }
-    }
-
-    function loadNext() {
-      const start = currentChunk * CHUNK_SIZE
-      const end = start + CHUNK_SIZE >= file.size ? file.size : start + CHUNK_SIZE
-      const chunkFile = file.slice(start, end)
-      chunkFileList.push(chunkFile)
-      fileReader.readAsArrayBuffer(chunkFile)
-    }
-
-    loadNext()
-  })
+    })
 }
 
 export default createChunkFileAndMd5

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
-import type { TableColumnData } from '@arco-design/web-vue'
-import { CHUNK_SIZE } from '../constants'
-import { convertFileSizeUnit, downloadFileByBlob } from '../util/fileUtil'
-import { chunkDownloadFile, fetchFileList } from '../services/apis'
-import type { FilesType } from '../services/apis/typing'
+import {reactive, onMounted} from 'vue'
+import type {TableColumnData} from '@arco-design/web-vue'
+import {CHUNK_SIZE} from '../constants'
+import {convertFileSizeUnit, downloadFileByBlob} from '../util/fileUtil'
+import {chunkDownloadFile, fetchFileList} from '../services/apis'
+import type {FilesType} from '../services/apis/typing'
 
 type DownloadStatus = {
   progress?: number
@@ -17,18 +17,23 @@ const state = reactive<{ dataSource: FileDataType[]; blobRef: Map<number, BlobPa
   blobRef: new Map<number, BlobPart[]>()
 })
 
+const s = reactive<{ dataSource: FileDataType[], blobRef: Map<number, BlobPart[]> }>({
+  dataSource: [],
+  blobRef: new Map()
+})
+
 onMounted(async () => {
-  const { code, data } = await fetchFileList()
+  const {code, data} = await fetchFileList()
   if (code === 200) state.dataSource = data
 })
 
 const columns: TableColumnData[] = [
-  { title: '主键id', dataIndex: 'id', width: 80 },
-  { title: '原文件名', dataIndex: 'originFileName', ellipsis: true, tooltip: true },
-  { title: 'object', dataIndex: 'object', ellipsis: true, tooltip: true },
-  { title: '文件大小', dataIndex: 'size', slotName: 'size', width: 120 },
-  { title: '下载进度', dataIndex: 'progress', slotName: 'progress' },
-  { title: '操作', dataIndex: 'status', slotName: 'status', width: 120 }
+  {title: '主键id', dataIndex: 'id', width: 80},
+  {title: '原文件名', dataIndex: 'originFileName', ellipsis: true, tooltip: true},
+  {title: 'object', dataIndex: 'object', ellipsis: true, tooltip: true},
+  {title: '文件大小', dataIndex: 'size', slotName: 'size', width: 120},
+  {title: '下载进度', dataIndex: 'progress', slotName: 'progress'},
+  {title: '操作', dataIndex: 'status', slotName: 'status', width: 120}
 ]
 
 // 分片下载文件
@@ -78,27 +83,33 @@ const puaseDownload = (record: FileDataType) => {
     <template #size="{ record }">{{ convertFileSizeUnit(record.size) }}</template>
     <!-- 下载进度 -->
     <template #progress="{ record }">
-      <a-progress v-if="record.progress" :percent="record.progress / 100" />
+      <a-progress v-if="record.progress" :percent="record.progress / 100"/>
     </template>
     <!-- 操作 -->
     <template #status="{ record }">
       <template v-if="record.status === undefined || record.status === 'error'">
         <a-button type="primary" @click="downloadFile(record)">
-          <template #icon><icon-download /></template>
+          <template #icon>
+            <icon-download/>
+          </template>
         </a-button>
       </template>
       <template v-else>
         <!-- 暂停 -->
         <a-button
-          v-if="record.status === 'downloading'"
-          type="primary"
-          @click="puaseDownload(record)"
+            v-if="record.status === 'downloading'"
+            type="primary"
+            @click="puaseDownload(record)"
         >
-          <template #icon><icon-pause-circle /></template>
+          <template #icon>
+            <icon-pause-circle/>
+          </template>
         </a-button>
         <!-- 继续下载 -->
         <a-button v-else type="primary" @click="downloadFile(record)">
-          <template #icon><icon-play-circle /></template>
+          <template #icon>
+            <icon-play-circle/>
+          </template>
         </a-button>
       </template>
     </template>

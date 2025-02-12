@@ -1,6 +1,7 @@
 import createChunk, { type ChunkFileType } from './createChunk'
 
 onmessage = async (e: MessageEvent) => {
+  //传过来
   const { file, CHUNK_SIZE, startChunkIndex: start, endChunkIndex: end } = e.data
 
   const promise: Promise<ChunkFileType>[] = []
