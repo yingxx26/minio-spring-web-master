@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import {ref} from 'vue'
 import FileTable from './components/FileTable.vue'
 import UploadModal from './components/UploadModal.vue'
+
+import MyFileTable from './components/MyFileTable.vue'
 
 const visible = ref(false)
 </script>
@@ -11,8 +13,15 @@ const visible = ref(false)
     <a-button type="primary" @click="visible = true">上传文件</a-button>
   </div>
 
-  <FileTable />
-  <UploadModal v-model:visible="visible" />
+  <FileTable/>
+  <UploadModal v-model:visible="visible"/>
+
+
+  <div style="margin-bottom: 20px; text-align: left">
+    <a-button type="primary" @click="visible = true">我的上传文件</a-button>
+  </div>
+  <MyFileTable/>
+  <UploadModal v-model:visible="visible"/>
 </template>
 
 <style>
