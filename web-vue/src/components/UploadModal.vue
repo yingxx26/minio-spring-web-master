@@ -135,7 +135,7 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
         // 未上传
       } */
 
-  // 返回需要上传分片和对应地址
+  // 返回需要上传分片和对应地址 item：前端需要上传的，data：后端已经上传的
   const needUploadFile = await initSliceFile(item, data)
   console.log('需要上传的文件', needUploadFile)
   const totalSize = needUploadFile.reduce((pre, cur) => pre + cur.file.size, 0)
@@ -153,7 +153,7 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
     state.dataSource[index].status = 'error'
     return
   }
-
+//没有失败的分片，就合并
   try {
     const {code, data} = await mergeFileByMd5(item.md5)
     if (code === 200) {
@@ -191,7 +191,7 @@ const initSliceFile = async (item: FileTableDataType, initData: UploadFileInfoTy
 
   // 存放需要去上传的文件数据
   if ((listParts || []).length == 0) {
- // 若全都没有上传，一一对应，其中 urls 是所有分片上传的 url 集合
+    // 若全都没有上传，一一对应，其中 urls 是所有分片上传的 url 集合
     item.chunkFileList.forEach((item, index) => {
       //url是minio初始化文件分片地址， /** 分片成功返回的分片地址，前端直接调用进行上传 */
       needUploadFile.push({url: data.urls[index], file: item})

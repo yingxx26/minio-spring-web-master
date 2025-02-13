@@ -87,6 +87,7 @@ const puaseDownload = (record: FileDataType) => {
     </template>
     <!-- 操作 -->
     <template #status="{ record }">
+      <!-- 下载 -->
       <template v-if="record.status === undefined || record.status === 'error'">
         <a-button type="primary" @click="downloadFile(record)">
           <template #icon>
@@ -95,7 +96,7 @@ const puaseDownload = (record: FileDataType) => {
         </a-button>
       </template>
       <template v-else>
-        <!-- 暂停 -->
+        <!-- 暂停下载 -->
         <a-button
             v-if="record.status === 'downloading'"
             type="primary"
