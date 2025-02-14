@@ -20,6 +20,7 @@ declare module 'vue' {
     AUpload: typeof import('@arco-design/web-vue')['Upload']
     FileTable: typeof import('./src/components/FileTable.vue')['default']
     MyFileTable: typeof import('./src/components/MyFileTable.vue')['default']
+    MyUploadModal: typeof import('./src/components/MyUploadModal.vue')['default']
     UploadModal: typeof import('./src/components/UploadModal.vue')['default']
   }
 }
