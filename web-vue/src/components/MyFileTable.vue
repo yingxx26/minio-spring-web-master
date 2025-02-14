@@ -83,8 +83,20 @@ const downloadFile = async (record: FileDataType) => {
     const start = CHUNK_SIZE * (i - 1);
     let end = CHUNK_SIZE * i - 1;
     if (end > record.size) end = record.size;
-
+    try {
+      const res = await chunkDownloadFile(record.id, `bytes=${start}-${end}`)
+      const currentDataBlob = state.blobRef.get(record.id) || [];
+      state.blobRef.set(record.id, [...currentDataBlob, res as unknown as BlobPart])
+      state.dataSource[index].progress = Math.floor((end / record.size) * 100)
+    } catch (error) {
+      state.dataSource[index].status = 'error'
+      return
+    }
   }
+  state.dataSource[index].status = undefined;
+  state.dataSource[index].progress = undefined // 重置进度条
+  const blob = new Blob(state.blobRef.get(record.id));
+  downloadFileByBlob(blob, record.originFileName)
 }
 
 // 暂停下载

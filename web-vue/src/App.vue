@@ -4,8 +4,10 @@ import FileTable from './components/FileTable.vue'
 import UploadModal from './components/UploadModal.vue'
 
 import MyFileTable from './components/MyFileTable.vue'
+import MyUploadModal from './components/MyUploadModal.vue'
 
 const visible = ref(false)
+const myVisible = ref(false)
 </script>
 
 <template>
@@ -18,10 +20,10 @@ const visible = ref(false)
 
 
   <div style="margin-bottom: 20px; text-align: left">
-    <a-button type="primary" @click="visible = true">我的上传文件</a-button>
+    <a-button type="primary" @click="myVisible = true">我的上传文件</a-button>
   </div>
   <MyFileTable/>
-  <UploadModal v-model:visible="visible"/>
+  <MyUploadModal v-model:visible="myVisible"/>
 </template>
 
 <style>

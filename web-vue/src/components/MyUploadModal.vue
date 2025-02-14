@@ -1,3 +1,50 @@
+<template>
+  <a-modal title="上传" :width="800" v-model:visible="visible" @cancel="visible = false">
+    <a-card title="Arco Card" size="small">
+      <template #title>
+        <a-space>
+          <a-upload :show-file-list="false" :auto-upload="false" @change="selectFile"></a-upload>
+          <a-button type="primary" @click="onUpload">
+            <template #icon>
+              <icon-cloud/>
+            </template>
+            <template #default>上传文件</template>
+          </a-button>
+        </a-space>
+      </template>
+
+      <a-list size="small">
+        <a-list-item v-for="item in state.dataSource" :key="item.uid">
+          <a-list-item-meta :title="item.name">
+            <template #description>
+              <a-space size="medium">
+                <div>
+                  大小1：<span style="color: blue">{{ item.unitSize }}</span>
+                </div>
+                <div>
+                  md5:
+                  <span style="color: red">
+                   <template v-if="item.md5Progress">
+                       {{ `${item.md5Progress}%` }}
+                     <!--                      {{  item.md5Progress }}-->
+                   </template>
+                   <template v-else>{{ item.md5 }}</template>
+                </span>
+                </div>
+              </a-space>
+              <a-progress v-if="item.progress" :percent="item.progress / 100"/>
+            </template>
+          </a-list-item-meta>
+          <template #actions>
+            <a-tag :color="tagMap[item.status].color">{{ tagMap[item.status].text }}</a-tag>
+          </template>
+        </a-list-item>
+      </a-list>
+    </a-card>
+  </a-modal>
+</template>
+
+
 <script setup lang="ts">
 import type {FileItem} from '@arco-design/web-vue'
 import axios from 'axios'
@@ -246,61 +293,3 @@ const uploadChunkUrl = (
 }
 </script>
 
-<template>
-  <a-modal title="上传" :width="800" v-model:visible="visible" @cancel="visible = false">
-    <a-card title="Arco Card" size="small">
-      <template #title>
-        <a-space>
-          <a-upload :show-file-list="false" :auto-upload="false" @change="selectFile"/>
-          <a-button type="primary" @click="onUpload">
-            <template #icon>
-              <icon-cloud/>
-            </template>
-            <template #default>上传文件</template>
-          </a-button>
-        </a-space>
-      </template>
-
-      <a-list size="small">
-        <a-list-item v-for="item in state.dataSource" :key="item.uid">
-          <a-list-item-meta :title="item.name">
-            <template #description>
-              <a-space size="medium">
-                <div>
-                  大小: <span style="color: blue">{{ item.unitSize }}</span>
-                </div>
-                <div>
-                  md5:
-                  <span style="color: red">
-                    <template v-if="item.md5Progress">
-                      {{ `${item.md5Progress}%` }}
-                    </template>
-                    <template v-else>{{ item.md5 }}</template>
-                  </span>
-                </div>
-              </a-space>
-              <a-progress v-if="item.progress" :percent="item.progress / 100"/>
-            </template>
-          </a-list-item-meta>
-          <template #actions>
-            <a-tag :color="tagMap[item.status].color">{{ tagMap[item.status].text }}</a-tag>
-          </template>
-          <!--
-           /** 计算MD5中（加载中） | 等待上传     | 上传中       | 上传成功    | 上传失败 */
-          status: 'preparation' | 'preupload' | 'uploading' | 'success' | 'error'
-          -->
-      <!--
-       //  文件上传过程中的多种状态
-        const tagMap = {
-          preparation: {color: 'gold', text: 'MD5计算中'},
-          preupload: {color: 'purple', text: '等待上传'},
-          uploading: {color: 'blue', text: '上传中'},
-          success: {color: 'green', text: '上传成功'},
-          error: {color: 'error', text: '上传失败'}
-        }
-       -->
-        </a-list-item>
-      </a-list>
-    </a-card>
-  </a-modal>
-</template>
