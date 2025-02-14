@@ -144,43 +144,28 @@ const onUpload = async () => {
  */
 const uploadFile = async (index: number, item: FileTableDataType) => {
 
-  const {code, data} = await checkFileByMd5(item.md5)
-  state.dataSource[index].status = 'uploading'
-
+  const {code, data} = await checkFileByMd5(item.md5);
+  state.dataSource[index].status = 'uploading';
   if (code === HttpCodeUploadEnum.SUCCESS) {
-    //  上传成功
-    state.dataSource[index].progress = 100
+    state.dataSource[index].progress = 100;
     state.dataSource[index].status = 'success'
     return
   } else if (code === HttpCodeUploadEnum.FAIL) {
-    //  上传失败
     state.dataSource[index].status = 'error'
     return
-  } /*  else if (code === HttpCodeUploadEnum.UPLOADING) {
-        // 上传中，返回已上传的文件数据和分片列表
-      } else {
-        // 未上传
-      } */
-
-  // 返回需要上传分片和对应地址 item：前端需要上传的，data：后端已经上传的
+  }
+  //说明是部分上傳
   const needUploadFile = await initSliceFile(item, data)
-  console.log('需要上传的文件', needUploadFile)
   const totalSize = needUploadFile.reduce((pre, cur) => pre + cur.file.size, 0)
-
-  // plimit 并发上传
-  const uploadLimit = needUploadFile.map((n) =>
-      limit(() => uploadChunkUrl(n, index, totalSize, item.file.type))
-  )
-
+  const uploadLimit = needUploadFile.map((n) => limit(() => uploadChunkUrl(n, index, totalSize, item.file.type)))
   const results = await Promise.allSettled(uploadLimit)
   const errResults = results.filter((r) => r.status === 'rejected')
-
   if (errResults.length > 0) {
     console.warn(item.name + ' 上传失败的分片-----', errResults)
     state.dataSource[index].status = 'error'
     return
   }
-//没有失败的分片，就合并
+  //没有失败的分片，就合并
   try {
     const {code, data} = await mergeFileByMd5(item.md5)
     if (code === 200) {
@@ -193,49 +178,36 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
   }
 }
 
-// 初始化分片操作并将分片文件和其上传地址一一对应
-const initSliceFile = async (item: FileTableDataType, initData: UploadFileInfoType) => {
 
-  //  只有上传中的分片文件才会有 initData 数据，用 {} 做兜底
-  const {uploadId, listParts} = initData || {}
-  // listParts 从 1 开始，前端需要上传的分片索引+1  private List<Integer> listParts;
-  // 初始化分片参数
+// 初始化分片操作并将分片文件和其上传地址一一对应
+const initSliceFile = async (webdata: FileTableDataType, dbData: UploadFileInfoType) => {
+
+  const {uploadId, listParts} = dbData || {}
   const param: UploadFileInfoType = {
     uploadId,
-    originFileName: item.name,
-    size: item.size,
+    originFileName: webdata.name,
+    size: webdata.size,
     chunkSize: CHUNK_SIZE,
-    chunkCount: item.chunkCount,
-    md5: item.md5,
-    contentType: item.file.type
+    chunkCount: webdata.chunkCount,
+    md5: webdata.md5,
+    contentType: webdata.file.type
   }
-
   const needUploadFile: ChunkFileUrlType[] = []
   //初始化文件分片地址及相关数据
   const {code, data} = await initMultPartFile(param)
-  //data : private String uploadId;  private List<String> urls;
   if (code !== 200) return []
-
-  // 存放需要去上传的文件数据
   if ((listParts || []).length == 0) {
-    // 若全都没有上传，一一对应，其中 urls 是所有分片上传的 url 集合
-    item.chunkFileList.forEach((item, index) => {
-      //url是minio初始化文件分片地址， /** 分片成功返回的分片地址，前端直接调用进行上传 */
-      needUploadFile.push({url: data.urls[index], file: item})
+    webdata.chunkFileList.forEach((file, index) => {
+      needUploadFile.push({url: data.urls[index], file: file})
     })
-
     return needUploadFile
   }
-
-  // 存在上传的，对比 minio 已上传的 listParts（序号），将已上传的过滤掉，只上传未上传的文件
-  item.chunkFileList.forEach((item, index) => {
-    // listParts 索引是从 1 开始的
+  webdata.chunkFileList.forEach((item, index) => {
     const i = (listParts || []).findIndex((v) => index + 1 == v)
     if (i === -1) {
       needUploadFile.push({url: data.urls[index], file: item})
     }
   })
-
   return needUploadFile
 }
 
@@ -248,15 +220,14 @@ const uploadChunkUrl = (
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
 
-    axios.put(chunkItem.url, chunkItem.file, {
-      headers: {'Content-Type': type || 'application/octet-stream'}
-    })
+    axios.put(chunkItem.url, chunkItem.file,
+        {headers: {'Content-Type': type || 'application/octet-stream'}})
         .then((res) => {
           if (res.status !== 200) {
             reject(chunkItem)
           } else {
             // 已上传的文件大小更新，上传进度更新
-            const newUploaedSize = state.dataSource[i].uploadedSize + chunkItem.file.size
+            const newUploaedSize = state.dataSource[i].uploadedSize + chunkItem.file.size;
             state.dataSource[i] = {
               ...state.dataSource[i],
               uploadedSize: newUploaedSize,
@@ -264,11 +235,10 @@ const uploadChunkUrl = (
             }
             resolve()
           }
-        })
-        .catch((err) => {
-          console.error(err)
-          reject(chunkItem)
-        })
+        }).catch((err) => {
+      console.error(err)
+      reject(chunkItem)
+    })
   })
 }
 </script>

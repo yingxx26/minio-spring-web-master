@@ -140,6 +140,11 @@ const uploadFile = async (index: number, item: FileTableDataType) => {
   console.log('需要上传的文件', needUploadFile)
   const totalSize = needUploadFile.reduce((pre, cur) => pre + cur.file.size, 0)
 
+ //needUploadFile: ChunkFileUrlType[]
+ /* type ChunkFileUrlType = {
+    url: string
+    file: Blob
+  }*/
   // plimit 并发上传
   const uploadLimit = needUploadFile.map((n) =>
       limit(() => uploadChunkUrl(n, index, totalSize, item.file.type))
