@@ -77,11 +77,8 @@ type FileTableDataType = {
   progress: number
   file: File
   chunkCount: number
-  /** 当前文件分片集合 */
   chunkFileList: Blob[]
-  /** 已上传的文件大小总和（计算进度条） */
   uploadedSize: number
-  /** 计算MD5中（加载中） | 等待上传 | 上传中  | 上传成功 | 上传失败 */
   status: 'preparation' | 'preupload' | 'uploading' | 'success' | 'error'
 }
 
@@ -103,9 +100,7 @@ const state = reactive<{ dataSource: FileTableDataType[] }>({
 const selectFile = async (_: FileItem[], fileItem: FileItem) => {
   const file = fileItem.file
   if (!file) return
-
   const chunkCount = Math.ceil((file.size ?? 0) / CHUNK_SIZE)
-  // 展示给 table的数据，部分参数用于初始化
   const dataItem: FileTableDataType = {
     uid: fileItem.uid,
     name: file.name,
@@ -122,23 +117,10 @@ const selectFile = async (_: FileItem[], fileItem: FileItem) => {
   }
   state.dataSource.push(dataItem)
   const i = state.dataSource.findIndex((item) => item.uid == dataItem.uid)
-  // 同步计算分片文件和 md5，实时更新计算进度
-  // const { md5, chunkFileList } = await createChunkFileAndMd5(
-  //   file as RcFile,
-  //   chunkCount,
-  //   (progress) => {
-  //     state.dataSource[i].md5Progress = progress
-  //   },
-  // )
-
-  // 采用多线程计算和默克尔树计算树根
   const chunks = await cutFile(file)
   const merkleTree = new MerkleTree(chunks.map((chunk) => chunk.hash))
   const md5 = merkleTree.getRootHash()
   const chunkFileList = chunks.map((chunk) => chunk.blob)
-  // console.log(md5, chunkFileList)
-
-  // 更新数据和状态
   state.dataSource[i] = {
     ...state.dataSource[i],
     md5,
@@ -150,9 +132,7 @@ const selectFile = async (_: FileItem[], fileItem: FileItem) => {
 // 查询文件状态并上传
 const onUpload = async () => {
   for (let i = 0; i < state.dataSource.length; i++) {
-    // md5 未计算完成和正在上传的跳过（重复点击的情况）
-    if (!state.dataSource[i].md5 || state.dataSource[i].status == 'uploading') continue
-
+    if (!state.dataSource[i].md5 || state.dataSource[i].status == 'uploading') continue;
     await uploadFile(i, state.dataSource[i])
   }
 }
